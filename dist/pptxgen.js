@@ -51,7 +51,7 @@ Number.isInteger = Number.isInteger || function(value) {
 };
 
 // Detect Node.js
-var NODEJS = ( typeof module !== 'undefined' && module.exports );
+var NODEJS = false;
 
 // [Node.js] <script> includes
 if ( NODEJS ) {
