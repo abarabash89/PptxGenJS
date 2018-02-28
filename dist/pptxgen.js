@@ -2047,6 +2047,7 @@ var PptxGenJS = function(){
 
 		// Calc opts.w if we can
 		if ( !opts.w && opts.colW ) {
+			opts.w = 0;
 			if ( Array.isArray(opts.colW) ) opts.colW.forEach(function(val,idx){ opts.w += val });
 			else { opts.w = opts.colW * numCols }
 		}
@@ -2080,9 +2081,11 @@ var PptxGenJS = function(){
 			// B: Calc usable vertical space/table height
 			// NOTE: Use margins after the first Slide (dont re-use opt.y - it could've been halfway down the page!) (ISSUE#43,ISSUE#47,ISSUE#48)
 			if ( arrObjSlides.length > 0 ) {
-				emuSlideTabH = ( gObjPptx.pptLayout.height - inch2Emu( (opts.y/EMU < arrInchMargins[0] ? opts.y/EMU : arrInchMargins[0]) + arrInchMargins[2]) );
-				// Use whichever is greater: area between margins or the table H provided (dont shrink usable area - the whole point of over-riding X on paging is to *increarse* usable space)
-				if ( emuSlideTabH < opts.h ) emuSlideTabH = opts.h;
+				emuSlideTabH = (opts.h ? opts.h : gObjPptx.pptLayout.height)
+								- inch2Emu( (opts.y/EMU < arrInchMargins[0] ? opts.y/EMU : arrInchMargins[0]) + arrInchMargins[2]);
+				// emuSlideTabH = ( opts.h ? opts.h : gObjPptx.pptLayout.height - inch2Emu( (opts.y/EMU < arrInchMargins[0] ? opts.y/EMU : arrInchMargins[0]) + arrInchMargins[2]) );
+				// // Use whichever is greater: area between margins or the table H provided (dont shrink usable area - the whole point of over-riding X on paging is to *increarse* usable space)
+				// if ( emuSlideTabH < opts.h ) emuSlideTabH = opts.h;
 			}
 			else emuSlideTabH = ( opts.h ? opts.h : (gObjPptx.pptLayout.height - inch2Emu((opts.y/EMU || arrInchMargins[0]) + arrInchMargins[2])) );
 			if (opts.debug) console.log('* Slide '+arrObjSlides.length+': emuSlideTabH (in) ........ = '+ (emuSlideTabH/EMU).toFixed(1));
@@ -2128,8 +2131,8 @@ var PptxGenJS = function(){
 
 				// 5: Add cell margins to lineHeight (if any)
 				if ( cell.opts.margin ) {
-					if ( cell.opts.margin[0] ) lineHeight += (cell.opts.margin[0]*ONEPT) / intMaxLineCnt;
-					if ( cell.opts.margin[2] ) lineHeight += (cell.opts.margin[2]*ONEPT) / intMaxLineCnt;
+					if ( Array.isArray(cell.opts.margin) && cell.opts.margin[0] ) lineHeight += cell.opts.margin[0] / intMaxLineCnt;
+					if ( Array.isArray(cell.opts.margin) && cell.opts.margin[2] ) lineHeight += cell.opts.margin[2] / intMaxLineCnt;
 				}
 
 				// Add to array
@@ -4906,7 +4909,7 @@ var PptxGenJS = function(){
 		// STEP 5: Break table into Slides as needed
 		// Pass head-rows as there is an option to add to each table and the parse func needs this daa to fulfill that option
 		opts.arrObjTabHeadRows = arrObjTabHeadRows || '';
-		opts.colW = arrColW;
+		opts.colW = opts.colW.length ? opts.colW : arrColW;
 
 		getSlidesForTableRows( arrObjTabHeadRows.concat(arrObjTabBodyRows).concat(arrObjTabFootRows), opts )
 		.forEach(function(arrTabRows,idx){
