@@ -4925,7 +4925,7 @@ var PptxGenJS = function(){
 			if ( opts.addImage ) newSlide.addImage({ path:opts.addImage.url, x:opts.addImage.x, y:opts.addImage.y, w:opts.addImage.w, h:opts.addImage.h });
 			if ( opts.addShape ) newSlide.addShape( opts.addShape.shape, (opts.addShape.opts || {}) );
 			if ( opts.addTable ) newSlide.addTable( opts.addTable.rows,  (opts.addTable.opts || {}) );
-			if ( opts.addText  ) newSlide.addText(  opts.addText.text,   (opts.addText.opts  || {}) );
+			if ( opts.addText  ) newSlide.addText(  opts.addText.func ? opts.addText.func(idx) : opts.addText.text,   (opts.addText.opts  || {}) );
 		});
 	}
 };
