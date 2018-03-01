@@ -1977,22 +1977,36 @@ var PptxGenJS = function(){
 
 		// A: Remove leading/trailing space
 		var inStr = (cell.text || '').toString().trim();
-
+		if (CPL < 19) {
+			return [inStr]
+		}
 		// B: Build line array
-		window.$.each(inStr.split('\n'), function(i,line){
-			window.$.each(line.split(' '), function(i,word){
-				if ( strCurrLine.length + word.length + 1 < CPL ) {
-					strCurrLine += (word + " ");
-				}
-				else {
+		const lines = inStr.split('\n')
+		const cpl = Math.round(CPL) - 1
+		window.$.each(lines, function(i,line){
+			if ( strCurrLine.length + line.length + 1 < CPL ) {
+				strCurrLine += (line + " ");
+			}
+			else {
+				let temp = strCurrLine + line
+				if (temp.length > CPL) {
+					do {
+						let str = temp.slice(0, CPL)
+						temp = temp.slice(CPL)
+						strCurrLine = str
+						if (strCurrLine.length >= cpl) {
+							arrLines.push( strCurrLine )
+						}
+					} while(temp.length)
+				} else {
 					if ( strCurrLine ) arrLines.push( strCurrLine );
-					strCurrLine = (word + " ");
+					strCurrLine = (line + " ");
 				}
-			});
-			// All words for this line have been exhausted, flush buffer to new line, clear line var
-			if ( strCurrLine ) arrLines.push( window.$.trim(strCurrLine) + CRLF );
-			strCurrLine = '';
+			}
 		});
+		// All words for this line have been exhausted, flush buffer to new line, clear line var
+		if ( strCurrLine ) arrLines.push( window.$.trim(strCurrLine) + CRLF );
+		strCurrLine = '';
 
 		// C: Remove trailing linebreak
 		arrLines[(arrLines.length-1)] = window.$.trim(arrLines[(arrLines.length-1)]);
@@ -2081,13 +2095,13 @@ var PptxGenJS = function(){
 			// B: Calc usable vertical space/table height
 			// NOTE: Use margins after the first Slide (dont re-use opt.y - it could've been halfway down the page!) (ISSUE#43,ISSUE#47,ISSUE#48)
 			if ( arrObjSlides.length > 0 ) {
-				emuSlideTabH = (opts.h ? opts.h : gObjPptx.pptLayout.height)
+				emuSlideTabH = (opts.hs ? opts.hs : gObjPptx.pptLayout.height)
 								- inch2Emu( (opts.y/EMU < arrInchMargins[0] ? opts.y/EMU : arrInchMargins[0]) + arrInchMargins[2]);
 				// emuSlideTabH = ( opts.h ? opts.h : gObjPptx.pptLayout.height - inch2Emu( (opts.y/EMU < arrInchMargins[0] ? opts.y/EMU : arrInchMargins[0]) + arrInchMargins[2]) );
 				// // Use whichever is greater: area between margins or the table H provided (dont shrink usable area - the whole point of over-riding X on paging is to *increarse* usable space)
 				// if ( emuSlideTabH < opts.h ) emuSlideTabH = opts.h;
 			}
-			else emuSlideTabH = ( opts.h ? opts.h : (gObjPptx.pptLayout.height - inch2Emu((opts.y/EMU || arrInchMargins[0]) + arrInchMargins[2])) );
+			else emuSlideTabH = opts.h ? opts.h : gObjPptx.pptLayout.height - inch2Emu( (opts.y/EMU < arrInchMargins[0] ? opts.y/EMU : arrInchMargins[0]) + arrInchMargins[2]);
 			if (opts.debug) console.log('* Slide '+arrObjSlides.length+': emuSlideTabH (in) ........ = '+ (emuSlideTabH/EMU).toFixed(1));
 
 			// C: Parse and store each cell's text into line array (**MAGIC HAPPENS HERE**)
@@ -2119,6 +2133,7 @@ var PptxGenJS = function(){
 				currRow.push({ text:'', opts:cell.opts });
 
 				// 3: Parse cell contents into lines (**MAGIC HAPPENSS HERE**)
+			
 				var lines = parseTextToLines(cell, (opts.colW[iCell]/ONEPT));
 				arrCellsLines.push( lines );
 				//if (opts.debug) console.log('Cell:'+iCell+' - lines:'+lines.length);
